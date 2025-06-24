@@ -1,0 +1,57 @@
+#!/bin/bash
+
+set -xe
+
+## Build binaries
+build() {
+    cd src
+    rm -rf venv
+    FILES=$(ls *.requirements)
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install shiv
+    for FILE in $FILES; do
+        BASENAME="${FILE%%.*}"
+        if [[ -f "$BASENAME" ]]; then
+            mkdir tmp
+            cp $BASENAME tmp/main.py
+            shiv -o ../$BASENAME -p "/usr/bin/env python3" -r $BASENAME.requirements -e main:run --site-packages tmp
+            rm -rf tmp
+        else
+            shiv -o ../$BASENAME -p "/usr/bin/env python3" -r $BASENAME.requirements -c $BASENAME
+        fi
+    done
+    rm -rf venv
+}
+
+## Show this help message
+help() {
+    # Couleurs
+    RED='\033[31m'
+    GREEN='\033[32m'
+    YELLOW='\033[33m'
+    CYAN='\033[36m'
+    WHITE='\033[37m'
+    RESET='\033[0m'
+
+    echo -e "${CYAN}Usage() {$0 [command]${RESET}"
+    echo ""
+    echo -e "${CYAN}Commands:${RESET}"
+
+    awk '/^##/ {
+        desc = substr($0, 4);
+        getline;
+        if ($0 ~ /\(\)/) {
+            method = $1;
+            gsub("\\(\\)", "", method);
+            printf "  '$YELLOW'\033[33m%-20s'$RESET' %s\n", method, desc;
+        }
+    }' "$0"
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+    help
+else
+    "$@"
+fi

@@ -1,0 +1,68 @@
+#! /usr/bin/env python3
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+
+"""
+Linux (Debian/Ubuntu): sudo apt install genisoimage
+Mac (Homebrew): brew install cdrtools
+Windows: Use Cygwin or WSL with genisoimage installed
+"""
+
+
+def get_iso_tool():
+    """Determines the available ISO creation tool on the system."""
+    if shutil.which("genisoimage"):
+        return "genisoimage"
+    elif shutil.which("mkisofs"):
+        return "mkisofs"
+    else:
+        print("❌ No ISO creation tool found.")
+        print("👉 Install `genisoimage` (Linux) or `mkisofs` (Mac/Windows).")
+        sys.exit(1)
+
+
+def create_iso(source_folder):
+    """Generates an ISO image from a folder."""
+    if not os.path.isdir(source_folder):
+        print(f"❌ Error: The source folder '{source_folder}' does not exist.")
+        return
+
+    volume_name = os.path.basename(source_folder.strip("/")).title()
+
+    command = [
+        get_iso_tool(),
+        "-o",
+        volume_name + ".iso",  # Output file
+        "-V",
+        volume_name,  # Volume name
+        "-J",  # Joliet support (long Windows filenames)
+        "-R",  # Rock Ridge extensions (UNIX compatibility)
+        "-iso-level",
+        "3",  # Support for files > 4 GB
+        source_folder,  # Source folder
+    ]
+
+    try:
+        subprocess.run(command, check=True)
+        print(f"✅ ISO image successfully created: {volume_name}.iso")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Error during ISO creation: {e}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Create an ISO image from a folder."
+    )
+    parser.add_argument("source_folder", help="Path to the folder to convert to ISO")
+
+    args = parser.parse_args()
+
+    create_iso(args.source_folder)
+
+
+if __name__ == "__main__":
+    main()
