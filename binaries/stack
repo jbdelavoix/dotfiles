@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 ## Build binaries
 build() {
@@ -12,9 +12,9 @@ build() {
     pip install shiv
     for FILE in $FILES; do
         BASENAME="${FILE%%.*}"
-        if [[ -f "$BASENAME" ]]; then
+        if [[ -f "$BASENAME.py" ]]; then
             mkdir tmp
-            cp $BASENAME tmp/main.py
+            cp $BASENAME.py tmp/main.py
             shiv -o ../$BASENAME -p "/usr/bin/env python3" -r $BASENAME.requirements -e main:run --site-packages tmp
             rm -rf tmp
         else
@@ -26,7 +26,7 @@ build() {
 
 ## Show this help message
 help() {
-    # Couleurs
+    # ANSI Colors
     RED='\033[31m'
     GREEN='\033[32m'
     YELLOW='\033[33m'
@@ -34,19 +34,21 @@ help() {
     WHITE='\033[37m'
     RESET='\033[0m'
 
-    echo -e "${CYAN}Usage() {$0 [command]${RESET}"
-    echo ""
-    echo -e "${CYAN}Commands:${RESET}"
+    # Usage
+    printf "${CYAN}Usage: $0 [command]${RESET}\n\n"
+    printf "${CYAN}Commands:${RESET}\n"
 
-    awk '/^##/ {
-        desc = substr($0, 4);
-        getline;
-        if ($0 ~ /\(\)/) {
-            method = $1;
-            gsub("\\(\\)", "", method);
-            printf "  '$YELLOW'\033[33m%-20s'$RESET' %s\n", method, desc;
+    awk -v YELLOW="$YELLOW" -v RESET="$RESET" '
+        /^##/ {
+            desc = substr($0, 4);
+            getline;
+            if ($0 ~ /\(\)/) {
+                method = $1;
+                gsub(/\(\)/, "", method);
+                printf "  %s%-20s%s %s\n", YELLOW, method, RESET, desc;
+            }
         }
-    }' "$0"
+    ' "$0"
 }
 
 # Main

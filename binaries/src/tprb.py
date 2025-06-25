@@ -69,9 +69,14 @@ def get_provider_versions(provider_name, last_releases_only):
     )
     response.raise_for_status()
 
-    return sorted([v["version"] for v in response.json()["versions"] if "alpha" not in v["version"]], key=Version)[
-        -3 if last_releases_only else 0 :
-    ]
+    return sorted(
+        [
+            v["version"]
+            for v in response.json()["versions"]
+            if "alpha" not in v["version"]
+        ],
+        key=Version,
+    )[-3 if last_releases_only else 0 :]
 
 
 def get_provider_package(provider_name, version, platform):
